@@ -130,9 +130,9 @@ void CPeripheralCecAdapter::ResetMembers(void)
   m_bHasConnectedAudioSystem = false;
   m_strMenuLanguage          = "???";
   //m_lastKeypress           = 0;
-  m_lastChange               = VOLUME_CHANGE_NONE;
+  //m_lastChange             = VOLUME_CHANGE_NONE;
   m_iExitCode                = EXITCODE_QUIT;
-  m_bIsMuted                 = false; // TODO fetch the correct initial value when system audiostatus is implemented in libCEC
+  //m_bIsMuted               = false; // TODO fetch the correct initial value when system audiostatus is implemented in libCEC
   m_bGoingToStandby          = false;
   m_bIsActive                = false;
   m_bIsRunning               = false;
@@ -383,8 +383,10 @@ void CPeripheralCecAdapter::Process(void)
 
   while (!m_bStop)
   {
+#if 0
     if (!m_bStop)
       ProcessVolumeChange();
+#endif
 
     if (!m_bStop)
       ProcessActivateSource();
@@ -474,6 +476,7 @@ void CPeripheralCecAdapter::Process(void)
   }
 }
 
+#if 0
 bool CPeripheralCecAdapter::HasAudioControl(void)
 {
   CSingleLock lock(m_critSection);
@@ -503,25 +506,22 @@ void CPeripheralCecAdapter::ProcessVolumeChange(void)
         m_volumeChangeQueue.pop();
 
       /* send another keypress after VOLUME_REFRESH_TIMEOUT ms */
-      //bool bRefresh(XbmcThreads::SystemClockMillis() - m_lastKeypress > VOLUME_REFRESH_TIMEOUT);
+      bool bRefresh(XbmcThreads::SystemClockMillis() - m_lastKeypress > VOLUME_REFRESH_TIMEOUT);
 
       /* only send the keypress when it hasn't been sent yet */
       if (pendingVolumeChange != m_lastChange)
       {
-        //m_lastKeypress = XbmcThreads::SystemClockMillis();
+        m_lastKeypress = XbmcThreads::SystemClockMillis();
         m_lastChange = pendingVolumeChange;
       }
-#if 0
       else if (bRefresh)
       {
         m_lastKeypress = XbmcThreads::SystemClockMillis();
         pendingVolumeChange = m_lastChange;
       }
-#endif
       else
         pendingVolumeChange = VOLUME_CHANGE_NONE;
     }
-#if 0
     else if (m_lastKeypress > 0 && XbmcThreads::SystemClockMillis() - m_lastKeypress > VOLUME_CHANGE_TIMEOUT)
     {
       /* send a key release */
@@ -529,7 +529,6 @@ void CPeripheralCecAdapter::ProcessVolumeChange(void)
       bSendRelease = true;
       m_lastChange = VOLUME_CHANGE_NONE;
     }
-#endif
   }
 
   switch (pendingVolumeChange)
@@ -590,6 +589,7 @@ bool CPeripheralCecAdapter::IsMuted(void)
   }
   return false;
 }
+#endif
 
 void CPeripheralCecAdapter::SetMenuLanguage(const char *strLanguage)
 {
@@ -1567,6 +1567,7 @@ void CPeripheralCecAdapterUpdateThread::UpdateMenuLanguage(void)
   }
 }
 
+#if 0
 std::string CPeripheralCecAdapterUpdateThread::UpdateAudioSystemStatus(void)
 {
   std::string strAmpName;
@@ -1594,6 +1595,7 @@ std::string CPeripheralCecAdapterUpdateThread::UpdateAudioSystemStatus(void)
 
   return strAmpName;
 }
+#endif
 
 bool CPeripheralCecAdapterUpdateThread::SetInitialConfiguration(void)
 {
@@ -1621,9 +1623,11 @@ bool CPeripheralCecAdapterUpdateThread::SetInitialConfiguration(void)
   cec_osd_name tvName = m_adapter->m_cecAdapter->GetDeviceOSDName(CECDEVICE_TV);
   strNotification = StringUtils::Format("%s: %s", g_localizeStrings.Get(36016).c_str(), tvName.name);
 
+#if 0
   std::string strAmpName = UpdateAudioSystemStatus();
   if (!strAmpName.empty())
     strNotification += StringUtils::Format("- %s", strAmpName.c_str());
+#endif
 
   m_adapter->m_bIsReady = true;
 
@@ -1672,7 +1676,7 @@ void CPeripheralCecAdapterUpdateThread::Process(void)
       else
       {
         UpdateMenuLanguage();
-        UpdateAudioSystemStatus();
+        //UpdateAudioSystemStatus();
       }
 
       CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Info, g_localizeStrings.Get(36000), g_localizeStrings.Get(bConfigSet ? 36023 : 36024));
