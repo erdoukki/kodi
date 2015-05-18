@@ -356,9 +356,9 @@ namespace VIDEO
 
     if (!bSkip)
     {
-      if (RetrieveVideoInfo(items, settings.parent_name_root, content))
+      if (RetrieveVideoInfo(items, settings.parent_name_root, content) || CSettings::Get().GetBool("videolibrary.importall"))
       {
-        if (!m_bStop && (content == CONTENT_MOVIES || content == CONTENT_MUSICVIDEOS))
+        if (!m_bStop && (content == CONTENT_MOVIES || content == CONTENT_MUSICVIDEOS || CSettings::Get().GetBool("videolibrary.importall")))
         {
           m_database.SetPathHash(strDirectory, hash);
           if (m_bClean)
