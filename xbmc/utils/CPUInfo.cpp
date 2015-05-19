@@ -20,6 +20,7 @@
 
 #include <cstdlib>
 
+#include "system.h"
 #include "CPUInfo.h"
 #include "utils/Temperature.h"
 #include <string>
@@ -96,6 +97,10 @@
 #include "log.h"
 #include "settings/AdvancedSettings.h"
 #include "utils/StringUtils.h"
+
+#ifdef HAS_LIBAMCODEC
+#include "utils/AMLUtils.h"
+#endif
 
 using namespace std;
 
@@ -255,18 +260,16 @@ CCPUInfo::CCPUInfo(void)
   }
 #else
   m_fProcStat = fopen("/proc/stat", "r");
-  m_fProcTemperature = fopen("/proc/acpi/thermal_zone/THM0/temperature", "r");
+  // read from the new location of the temperature data on new kernels, 2.6.39, 3.0 etc
+    m_fProcTemperature = fopen("/sys/class/hwmon/hwmon0/temp1_input", "r");
+  if (m_fProcTemperature == NULL)
+    m_fProcTemperature = fopen("/sys/class/thermal/thermal_zone0/temp", "r");  // On Amlogic
   if (m_fProcTemperature == NULL)
     m_fProcTemperature = fopen("/proc/acpi/thermal_zone/THRM/temperature", "r");
   if (m_fProcTemperature == NULL)
     m_fProcTemperature = fopen("/proc/acpi/thermal_zone/THR0/temperature", "r");
   if (m_fProcTemperature == NULL)
     m_fProcTemperature = fopen("/proc/acpi/thermal_zone/TZ0/temperature", "r");
-  // read from the new location of the temperature data on new kernels, 2.6.39, 3.0 etc
-  if (m_fProcTemperature == NULL)   
-    m_fProcTemperature = fopen("/sys/class/hwmon/hwmon0/temp1_input", "r");
-  if (m_fProcTemperature == NULL)   
-    m_fProcTemperature = fopen("/sys/class/thermal/thermal_zone0/temp", "r");  // On Raspberry PIs
 
   m_fCPUFreq = fopen ("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq", "r");
   if (m_fCPUFreq == NULL)
@@ -611,7 +614,10 @@ bool CCPUInfo::getTemperature(CTemperature& temperature)
     if (!ret)
     {
       ret = fscanf(m_fProcTemperature, "%d", &value);
-      value = value / 1000;
+#ifndef HAS_LIBAMCODEC
+      if (!aml_present())
+        value = value / 1000;
+#endif
       scale = 'c';
       ret++;
     }
